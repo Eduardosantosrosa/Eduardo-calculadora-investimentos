@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calculadora Final</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Calculadora Final 2.0</h1>
+        <div class="calc-container">
+            <input type="number" id="valor1" placeholder="Primeiro valor">
+            <select id="operacao">
+                <optgroup label="Básicas">
+                    <option value="+">+ (Somar)</option>
+                    <option value="-">− (Subtrair)</option>
+                    <option value="*">× (Multiplicar)</option>
+                    <option value="/">÷ (Dividir)</option>
+                </optgroup>
+                <optgroup label="Avançadas">
+                    <option value="potencia">xʸ (Potência)</option>
+                    <option value="raiz">√ (Raiz)</option>
+                    <option value="fatorial">! (Fatorial)</option>
+                    <option value="fib">Fibonacci</option>
+                </optgroup>
+            </select>
+            <input type="number" id="valor2" placeholder="Segundo valor">
+            <button onclick="calcular()">Calcular</button>
+        </div>
+        <div id="resultado"></div>
+    </div>
+    <script src="script.js"></script>
+</body>
+</html>
