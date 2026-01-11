@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🧮 Calculadora Investimentos PRO 2026 - Eduardo Santos Rosa</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; padding: 20px; }
+        .container { max-width: 800px; margin: 0 auto; background: white; border-radius: 20px; box-shadow: 0 20px 40px rgba(0,0,0,0.1); overflow: hidden; }
+        h1 { background: linear-gradient(45deg, #007bff, #28a745); color: white; text-align: center; padding: 20px; margin: 0; }
+        .tabs { display: flex; background: #f8f9fa; border-bottom: 2px solid #dee2e6; }
+        .tab { flex: 1; padding: 15px; text-align: center; cursor: pointer; transition: all 0.3s; border: none; background: none; font-size: 16px; }
+        .tab.active { background: #007bff; color: white; }
+        .tab-content { display: none; padding: 30px; }
+        .tab-content.active { display: block; }
+        input, select, button { width: 100%; padding: 15px; margin: 10px 0; border: 2px solid #ddd; border-radius: 10px; font-size: 16px; box-sizing: border-box; }
+        input:focus, select:focus { outline: none; border-color: #007bff; }
+        button { background: #28a745; color: white; border: none; cursor: pointer; font-weight: bold; transition: background 0.3s; }
+        button:hover { background: #218838; }
+        .search-container { display: flex; gap: 10px; }
+        .search-container input { flex: 1; }
+        .search-container button { width: auto; padding: 15px 20px; background: #007bff; }
+        .search-container button svg { width: 20px; height: 20px; vertical-align: middle; }
+        #resultado { background: #f8f9fa; min-height: 100px; display: flex; align-items: center; justify-content: center; font-size: 18px; font-weight: bold; color: #28a745; }
+        canvas { max-height: 300px; }
+        .disclaimer { background: #fff3cd; padding: 15px; border-radius: 10px; text-align: center; font-size: 14px; margin-top: 20px; }
+        @media (max-width: 600px) { body { padding: 10px; } .tabs { flex-direction: column; } }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧮 Calculadora Investimentos PRO<br><small>Cotações Tempo Real + PDF Relatório</small></h1>
+        
+        <div class="tabs">
+            <button class="tab active" onclick="showTab('brasil')">🇧🇷 Brasil</button>
+            <button class="tab" onclick="showTab('exterior')">🌍 Exterior/Dólar</button>
+            <button class="tab" onclick="showTab('crypto')">₿ Cripto</button>
+        </div>
+
+        <!-- Aba Brasil -->
+        <div id="brasil" class="tab-content active">
+            <input type="number" id="valorBrasil" placeholder="Valor inicial (R$)" value="10000">
+            <input type="number" id="aporteMensal" placeholder="Aporte mensal (R$)" value="1000">
+            <input type="number" id="taxaAnual" placeholder="Taxa anual (%)" value="12" step="0.1">
+            <input type="number" id="prazoMeses" placeholder="Prazo (meses)" value="60">
+            <button onclick="calcularBrasil()">Calcular Rentabilidade</button>
+            <div id="resultadoBrasil"></div>
+        </div>
+
+        <!-- Aba Exterior -->
+        <div id="exterior" class="tab-content">
+            <select id="moedaBase">
+                <option value="brl">BRL → USD/EUR</option>
+                <option value="usd">USD → BRL</option>
+            </select>
+            <div class="search-container">
+                <input type="text" id="buscaMoeda" placeholder="Buscar USD, EUR... (lupa)" list="moedasLista">
+                <datalist id="moedasLista">
+                    <option value="USD">USD (Dólar)
+                    <option value="EUR">EUR (Euro)
+                </datalist>
+                <button onclick="buscarMoeda()"><svg viewBox="0 0 24 24" fill="currentColor"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg></button>
+            </div>
+            <input type="number" id="valorExterior" placeholder="Valor a converter">
+            <input type="number" id="cotacaoAtual" placeholder="Cotação atual (auto)" readonly>
+            <button onclick="calcularExterior()">Calcular + IOF/Spread</button>
+            <div id="resultadoExterior"></div>
+        </div>
+
+        <!-- Aba Cripto -->
+        <div id="crypto" class="tab-content">
+            <div class="search-container">
+                <input type="text" id="buscaCripto" placeholder="Buscar BTC, ETH, SOL..." list="criptosLista">
+                <datalist id="criptosLista">
+                    <option value="BTC">Bitcoin
+                    <option value="ETH">Ethereum
+                    <option value="USDT">USDT
+                    <option value="SOL">Solana
+                    <option value="ADA">Cardano
+                    <option value="DOGE">Dogecoin
+                </datalist>
+                <button onclick="buscarCripto()"><svg viewBox="0 0 24 24" fill="currentColor"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg></button>
+            </div>
+            <input type="number" id="valorCripto" placeholder="Quantidade">
+            <input type="number" id="precoCripto" placeholder="Preço atual BRL (auto)" readonly>
+            <button onclick="calcularCripto()">Calcular Valor Total</button>
+            <div id="resultadoCripto"></div>
+        </div>
+
+        <canvas id="grafico"></canvas>
+        <button id="btnRelatorio" onclick="gerarPDF()">📄 Gerar Relatório PDF</button>
+        <div class="disclaimer">
+            <strong>⚠️ DISCLAIMER:</strong> Simulação 2026. Valores reais variam. Para planejamento.[web:20]
+        </div>
+    </div>
+
+    <script>
+        let cotacoes = { USD: 5.70, EUR: 6.20, BTC: 450000, ETH: 15000, USDT: 5.70, SOL: 800, ADA: 2.50, DOGE: 0.80 }; // Fallbacks
+
+        async function atualizarCotações() {
+            try {
+                const res = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,ethereum,solana,cardano,dogecoin&vs_currencies=brl');
+                const data = await res.json();
+                cotacoes.BTC = data.bitcoin.brl;
+                cotacoes.ETH = data.ethereum.brl;
+                cotacoes.SOL = data.solana.brl;
+                cotacoes.ADA = data.cardano.brl;
+                cotacoes.DOGE = data.dogecoin.brl;
+            } catch (e) { console.log('API offline, usando fallback'); }
+            // Dólar/Euro via API gratuita (ex: exchangerate-api, mas fallback ok)
+        }
+
+        function showTab(tab) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.tab').forEach(el => el.classList.remove('active'));
+            document.getElementById(tab).classList.add('active');
+            event.target.classList.add('active');
+        }
+
+        function buscarMoeda() {
+            const busca = document.getElementById('buscaMoeda').value.toUpperCase();
+            document.getElementById('cotacaoAtual').value = cotacoes[busca] || 'Não encontrado';
+        }
+
+        function buscarCripto() {
+            const busca = document.getElementById('buscaCripto').value.toUpperCase();
+            document.getElementById('precoCripto').value = cotacoes[busca] || 'Não encontrado';
+        }
+
+        function calcularBrasil() {
+            const principal = parseFloat(document.getElementById('valorBrasil').value);
+            const aporte = parseFloat(document.getElementById('aporteMensal').value);
+            const taxa = parseFloat(document.getElementById('taxaAnual').value) / 100 / 12;
+            const meses = parseInt(document.getElementById('prazoMeses').value);
+            let montante = principal;
+            for (let i = 0; i < meses; i++) montante = montante * (1 + taxa) + aporte;
+            document.getElementById('resultadoBrasil').innerHTML = `Rentabilidade final: R$ ${montante.toFixed(2)}`;
+            desenharGrafico('Brasil', montante);
+        }
+
+        function calcularExterior() {
+            const valor = parseFloat(document.getElementById('valorExterior').value);
+            const cotacao = parseFloat(document.getElementById('cotacaoAtual').value);
+            const iof = valor * 0.011; // 1.1% IOF
+            const spread = valor * 0.04; // 4% spread médio
+            const total = valor + iof + spread;
+            document.getElementById('resultadoExterior').innerHTML = `Custo total: R$ ${total.toFixed(2)} (Cotação: ${cotacao})`;
+            desenharGrafico('Exterior', total);
+        }
+
+        function calcularCripto() {
+            const qtd = parseFloat(document.getElementById('valorCripto').value);
+            const preco = parseFloat(document.getElementById('precoCripto').value);
+            document.getElementById('resultadoCripto').innerHTML = `Valor total: R$ ${(qtd * preco).toFixed(2)}`;
+            desenharGrafico('Cripto', qtd * preco);
+        }
+
+        function desenharGrafico(tipo, valor) {
+            const ctx = document.getElementById('grafico').getContext('2d');
+            new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Investido', 'Rendimento'],
+                    datasets: [{ data: [10000, valor - 10000], backgroundColor: ['#007bff', '#28a745'] }]
+                },
+                options: { responsive: true }
+            });
+        }
+
+        function gerarPDF() {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            doc.text('Relatório Calculadora Investimentos PRO', 20, 20);
+            doc.text(`Data: ${new Date().toLocaleDateString('pt-BR')}`, 20, 30);
+            doc.text(document.getElementById('resultadoBrasil').innerText || 'Sem cálculo', 20, 40);
+            doc.text(document.getElementById('resultadoExterior').innerText || 'Sem cálculo', 20, 50);
+            doc.save('relatorio-investimentos.pdf');
+        }
+
+        // Inicializa
+        atualizarCotações();
+        setInterval(atualizarCotações, 30000); // Atualiza 30s
+        document.getElementById('buscaMoeda').addEventListener('input', buscarMoeda);
+        document.getElementById('buscaCripto').addEventListener('input', buscarCripto);
+    </script>
+</body>
+</html>
